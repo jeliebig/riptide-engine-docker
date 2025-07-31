@@ -3,7 +3,7 @@ import os
 import platform
 from collections import OrderedDict
 from pathlib import PurePosixPath
-from typing import List, Union
+from typing import List, Optional, Union
 
 from docker.types import Mount, Ulimit
 
@@ -66,6 +66,7 @@ class ContainerBuilder:
         self.allow_full_memlock = False
         self.cap_sys_admin = False
         self.use_host_network = False
+        self.platform = None
 
         self.on_linux = platform.system().lower().startswith('linux')
         self.set_env(EENV_ON_LINUX, "1" if self.on_linux else "0")
@@ -141,6 +142,10 @@ class ContainerBuilder:
 
     def set_allow_full_memlock(self, flag: bool):
         self.allow_full_memlock = flag
+        return self
+    
+    def set_platform(self, platform: Optional[str]):
+        self.platform = platform
         return self
 
     def enable_riptide_entrypoint(self, image_config, enable_original_entrypoint=True):
@@ -293,6 +298,8 @@ class ContainerBuilder:
 
         if self.name:
             args['name'] = self.name
+        if self.platform:
+            args['platform'] = self.platform
 
         if self.use_host_network:
             args['network_mode'] = 'host'
@@ -355,6 +362,8 @@ class ContainerBuilder:
             shell += ["-u", str(0)]
         if self.hostname:
             shell += ["--hostname", self.hostname]
+        if self.platform:
+            shell += ["--platform", self.platform]
 
         for key, value in self.env.items():
             shell += ['-e', key + '=' + value]

@@ -4,6 +4,7 @@ from time import sleep
 from docker import DockerClient
 from docker.errors import NotFound, ContainerError
 
+from riptide_engine_docker import utils
 from riptide_engine_docker.container_builder import ContainerBuilder, get_network_name, EENV_USER, EENV_GROUP, \
     EENV_RUN_MAIN_CMD_AS_USER, EENV_NO_STDOUT_REDIRECT
 from riptide.lib.cross_platform.cpuser import getuid, getgid
@@ -20,7 +21,7 @@ def cmd_detached(client: DockerClient, project: 'Project', command: 'Command', r
         client.images.get(command["image"])
     except NotFound:
         image_name_full = command['image'] if ":" in command['image'] else command['image'] + ":latest"
-        client.api.pull(image_name_full)
+        client.api.pull(image_name_full, platform=utils.get_default_platform())
 
     image = client.images.get(command["image"])
     image_config = client.api.inspect_image(command["image"])["Config"]
@@ -32,6 +33,7 @@ def cmd_detached(client: DockerClient, project: 'Project', command: 'Command', r
     )
 
     builder.set_name(get_container_name(project["name"]))
+    builder.set_platform(utils.get_default_platform())
     # network_mode host not supported atm
     builder.set_network(get_network_name(project["name"]))
 

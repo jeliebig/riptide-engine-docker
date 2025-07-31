@@ -10,6 +10,7 @@ from json import JSONDecodeError
 from riptide.config.document.config import Config
 from riptide.config.document.service import Service
 
+from riptide_engine_docker import utils
 from riptide_engine_docker.container_builder import get_network_name, get_service_container_name, \
     ContainerBuilder, RIPTIDE_DOCKER_LABEL_IS_RIPTIDE, EENV_NO_STDOUT_REDIRECT, EENV_ORIGINAL_ENTRYPOINT, \
     EENV_RUN_MAIN_CMD_AS_USER, EENV_USER, EENV_GROUP
@@ -73,7 +74,7 @@ def start(project_name: str, service: Service, command_group: str, client: Docke
             try:
                 queue.put(StartStopResultStep(current_step=current_step, steps=step_count, text="Pulling image... "))
                 image_name_full = service['image'] if ":" in service['image'] else service['image'] + ":latest"
-                for line in client.api.pull(image_name_full, stream=True):
+                for line in client.api.pull(image_name_full, stream=True, platform=utils.get_default_platform()):
                     try:
                         status = json.loads(line)
                         if "progress" in status:
@@ -96,6 +97,7 @@ def start(project_name: str, service: Service, command_group: str, client: Docke
             builder = ContainerBuilder(service["image"], command)
 
             builder.set_name(name)
+            builder.set_platform(utils.get_default_platform())
             builder.init_from_service(service, image_config)
             builder.set_hostname(service['$name'])
             # If src role is set, change workdir

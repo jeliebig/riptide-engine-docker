@@ -12,6 +12,7 @@ from riptide.config.document.service import Service
 from riptide.config.files import CONTAINER_SRC_PATH, get_current_relative_src_path
 from riptide.engine.abstract import ExecError
 
+from riptide_engine_docker import utils
 from riptide_engine_docker.container_builder import get_cmd_container_name, get_network_name, \
     get_service_container_name, ContainerBuilder, EENV_USER, EENV_GROUP, EENV_RUN_MAIN_CMD_AS_USER, \
     EENV_NO_STDOUT_REDIRECT
@@ -111,7 +112,7 @@ def fg(client, project: Project, container_name: str, exec_object: Union[Command
     except NotFound:
         print("Riptide: Pulling image... Your command will be run after that.", file=sys.stderr)
         try:
-            client.api.pull(exec_object['image'] if ":" in exec_object['image'] else exec_object['image'] + ":latest")
+            client.api.pull(exec_object['image'] if ":" in exec_object['image'] else exec_object['image'] + ":latest", platform=utils.get_default_platform())
             image = client.images.get(exec_object["image"])
             image_config = client.api.inspect_image(exec_object["image"])["Config"]
         except ImageNotFound as ex:
@@ -133,6 +134,7 @@ def fg(client, project: Project, container_name: str, exec_object: Union[Command
 
     builder.set_workdir(CONTAINER_SRC_PATH + "/" + get_current_relative_src_path(project))
     builder.set_name(container_name)
+    builder.set_platform(utils.get_default_platform())
     builder.set_network(get_network_name(project["name"]))
 
     if "use_host_network" in exec_object and exec_object["use_host_network"]:

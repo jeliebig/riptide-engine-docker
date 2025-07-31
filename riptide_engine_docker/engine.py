@@ -12,7 +12,7 @@ from riptide.config.document.command import Command
 from riptide.config.document.config import Config
 from riptide.config.document.project import Project
 from riptide.engine.abstract import AbstractEngine, ServiceStoppedException
-from riptide_engine_docker import network, service, path_utils, named_volumes
+from riptide_engine_docker import network, service, path_utils, named_volumes, utils
 from riptide_engine_docker.cmd_detached import cmd_detached
 from riptide_engine_docker.container_builder import get_service_container_name, RIPTIDE_DOCKER_LABEL_HTTP_PORT
 from riptide.engine.project_start_ctx import riptide_start_project_ctx
@@ -210,7 +210,7 @@ class DockerEngine(AbstractEngine):
         try:
             # TODO: This is pretty messy and should just be entirely redone, not
             # relying on the direct outout of the stream as-is.
-            for line in self.client.api.pull(image_name, stream=True):
+            for line in self.client.api.pull(image_name, stream=True, platform=utils.get_default_platform()):
                 # On other OSes the API doesn't really seem to behave nicely,
                 # returning invalid or incomplete JSON
                 if platform.system() == "Linux":
